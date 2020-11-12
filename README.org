@@ -1,0 +1,89 @@
+
+A small benchmark reusing D. Lemire's inverse problem as found [[https://github.com/lemire/Code-used-on-Daniel-Lemire-s-blog/blob/master/2020/11/08][here]].
+Check out the initial blog post [[https://lemire.me/blog/2020/11/08/benchmarking-theorem-provers-for-programming-tasks-yices-vs-z3/][here]] (and the other posts too!).
+
+
+* Differences
+
+  - This does not use any API for the solvers, just plain SMT-LIB syntax for the
+    input problem.
+  - Solvers are benchmarked on the set of problems in single query *and*
+    incremental mode. In the former, you have ~n~ files, each encoding a single
+    problem instance, whereas in the latter you have 1 file with all the
+    problems in sequence. 
+
+
+* Dependencies
+
+  - z3
+  - cvc4
+  - yices
+  - boolector
+  - python
+
+
+  These are automatically installed through the ~nix-shell~ if you use ~Nix~.
+
+* Running it
+
+
+Run it as follows (you can remove the ~nix-shell~ part if you do not use ~Nix~
+but you need to have the dependencies installed).
+
+The original values for Lemire's small experiment are ~bitsize = 64~ and ~limit
+= 1000~. The results are fairly consistent across the board though so that a
+limit of ~50~ already shows the pattern.
+
+#+BEGIN_SRC shell :var bitsize=64 :var limit=50 :results code :exports both
+nix-shell --pure --run "./doit.sh $bitsize $limit"
+#+END_SRC
+
+#+RESULTS:
+#+begin_src shell
+# Solver versions
+boolector
+3.2.1
+yices
+Yices 2.6.1
+z3
+Z3 version 4.8.8 - 64 bit
+cvc4
+This is CVC4 version 1.8
+
+Generating benchmark problems
+Generating 50 benchmark problems (size 64)
+
+# Multi benchmark
+boolector
+0m0.104s
+yices-smt2
+0m0.024s
+z3
+0m0.068s
+cvc4
+0m0.702s
+
+# Incremental benchmark
+boolector --incremental
+0m2.627s
+yices-smt2 --incremental
+0m0.009s
+z3
+0m0.022s
+cvc4 --incremental
+0m0.645s
+#+end_src
+
+
+** Take away
+
+   Do not draw too much conclusion from this lone benchmark. Better check out
+   [[https://smt-comp.github.io/2020/index.html][SMT-COMP]] for a broader overview of the strengths and weaknesses of the solvers.
+
+   But here are two bits of information:
+ - On *this* benchmark, ~yices~ is always the best, followed by ~z3~. This
+   confirms D. Lemire's results. However, the time differences are not as big:
+   ~z3~ is roughly 2-3 times slower than ~yices~, not 15.
+   This may be due either to different versions or to an oddity of the Python API.
+ - ~boolector~ is very slow in incremental mode: it's the only one that is
+   significantly *slower* in incremental mode.
